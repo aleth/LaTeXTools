@@ -1,5 +1,5 @@
 # ST2/ST3 compat
-from __future__ import print_function 
+from __future__ import print_function
 import sublime
 if sublime.version() < '3000':
     # we are on ST2 and Python 2.X
@@ -27,7 +27,7 @@ extra_file_ext = []
 
 def debug(s):
 	if print_debug:
-		print ("parseTeXlog: " + s.encode('UTF-8')) # I think the ST2 console wants this
+		print ("parseTeXlog: " + s) #s.encode('UTF-8')) # I think the ST2 console wants this
 
 # The following function is only used when debugging interactively.
 #
@@ -95,6 +95,7 @@ def parse_tex_log(data):
 	debug("Parsing log file")
 	errors = []
 	warnings = []
+	badboxes = []
 	parsing = []
 
 	guessed_encoding = 'UTF-8' # for now
@@ -111,7 +112,7 @@ def parse_tex_log(data):
 		debug("log file not in UTF-8 encoding!")
 		errors.append("ERROR: your log file is not in UTF-8 encoding.")
 		errors.append("Sorry, I can't process this file")
-		return (errors, warnings)
+		return (errors, warnings, badboxes)
 
 	# loop over all log lines; construct error message as needed
 	# This will be useful for multi-file documents
@@ -132,7 +133,7 @@ def parse_tex_log(data):
 	# NOTES:
 	# 1. we capture the initial and ending " if there is one; we'll need to remove it later
 	# 2. we define the basic filename parsing regex so we can recycle it
-	# 3. we allow for any character besides "(" before a file name starts. This gives a lot of 
+	# 3. we allow for any character besides "(" before a file name starts. This gives a lot of
 	#	 false positives but we kill them with os.path.isfile
 	file_basic = r"\"?(?:[a-zA-Z]\:)?(?:\.|(?:\.\./)|(?:\.\.\\))*.+?\.[^\s\"\)\.]+\"?"
 	file_rx = re.compile(r"[^\(]*?\((" + file_basic + r")(\s|\"|\)|$)(.*)")
@@ -144,8 +145,12 @@ def parse_tex_log(data):
 	file_useless2_rx = re.compile(r"<\"?(?:\.|\.\./)*[^\.]+\.[^>]*\"?>(.*)")
 	pagenum_begin_rx = re.compile(r"\s*\[\d*(.*)")
 	line_rx = re.compile(r"^l\.(\d+)\s(.*)")		# l.nn <text>
+
 	warning_rx = re.compile(r"^(.*?) Warning: (.+)") # Warnings, first line
-	line_rx_latex_warn = re.compile(r"input line (\d+)\.$") # Warnings, line number
+	line_rx_latex_warn = re.compile(r"input line (\d+)\..*") # Warnings, line number
+
+	badbox_rx = re.compile(r"^(.*?)Overfull (.*)")  # Bad box warning
+	line_rx_latex_badbox = re.compile(r"lines (\d+)--(.*?)")   # Bad box lines
 	matched_parens_rx = re.compile(r"\([^()]*\)") # matched parentheses, to be deleted (note: not if nested)
 	assignment_rx = re.compile(r"\\[^=]*=")	# assignment, heuristics for line merging
 	# Special case: the xy package, which reports end of processing with "loaded)" or "not reloaded)"
@@ -159,27 +164,42 @@ def parse_tex_log(data):
 
 	# Support function to handle warnings
 	def handle_warning(l):
-
 		if files==[]:
 			location = "[no file]"
 			parsing.append("PERR [handle_warning no files] " + l)
 		else:
-			location = files[-1]		
+			location = files[-1]
 
 		warn_match_line = line_rx_latex_warn.search(l)
+
 		if warn_match_line:
 			warn_line = warn_match_line.group(1)
 			warnings.append(location + ":" + warn_line + ": " + l)
 		else:
 			warnings.append(location + ": " + l)
 
-	
+	# Support function to handle bad boxes
+	def handle_badbox(l):
+		if files==[]:
+			location = "[no file]"
+			parsing.append("PERR [handle_badbox no files] " + l)
+		else:
+			location = files[-1]
+
+		badbox_match_line = line_rx_latex_badbox.search(l)
+
+		if badbox_match_line:
+			badbox_line = badbox_match_line.group(1)
+			badboxes.append(location + ":" + badbox_line + ": " + l)
+		else:
+			badboxes.append(location + ": " + l)
+
 	# State definitions
 	STATE_NORMAL = 0
 	STATE_SKIP = 1
 	STATE_REPORT_ERROR = 2
 	STATE_REPORT_WARNING = 3
-	
+
 	state = STATE_NORMAL
 
 	# Use our own iterator instead of for loop
@@ -191,7 +211,7 @@ def parse_tex_log(data):
 	recycle_extra = False		# Should we add extra to newly read line?
 	reprocess_extra = False		# Should we reprocess extra, without reading a new line?
 	emergency_stop = False		# If TeX stopped processing, we can't pop all files
-	incomplete_if = False  		# Ditto if some \if... statement is not complete	
+	incomplete_if = False  		# Ditto if some \if... statement is not complete
 
 	while True:
 		# first of all, see if we have a line to recycle (see heuristic for "l.<nn>" lines)
@@ -220,7 +240,7 @@ def parse_tex_log(data):
 		# also, the **<file name> line may be long, but we skip it, too (to avoid edge cases)
 		# We make sure we are NOT reprocessing a line!!!
 		# Also, we make sure we do not have a filename match, or it would be clobbered by exending!
-		if (not reprocess_extra) and line_num>1 and linelen>=79 and line[0:2] != "**": 
+		if (not reprocess_extra) and line_num>1 and linelen>=79 and line[0:2] != "**":
 			debug ("Line %d is %d characters long; last char is %s" % (line_num, len(line), line[-1]))
 			# HEURISTICS HERE
 			extend_line = True
@@ -314,7 +334,7 @@ def parse_tex_log(data):
 				parsing.append("PERR [STATE_REPORT_ERROR no files] " + line)
 			else:
 				location = files[-1]
-			debug("Found error: " + err_msg)		
+			debug("Found error: " + err_msg)
 			errors.append(location + ":" + err_line + ": " + err_msg + " [" + err_text + "]")
 			continue
 		if state==STATE_REPORT_WARNING:
@@ -350,7 +370,7 @@ def parse_tex_log(data):
 					parsing.append("PERR [files on stack (xypic)] " + ";".join(files))
 				else:
 					parsing.append("PERR [files on stack] " + ";".join(files))
-				files=[]			
+				files=[]
 			# break
 			# We cannot stop here because pdftex may yet have errors to report.
 
@@ -393,8 +413,12 @@ def parse_tex_log(data):
 		# skip everything for now
 		# Over/underfull messages end with [] so look for that
 		if line[0:8] == "Overfull" or line[0:9] == "Underfull":
+
+			current_badbox = line;
 			if line[-2:]=="[]": # one-line over/underfull message
+				handle_badbox(current_badbox)
 				continue
+
 			ou_processing = True
 			while ou_processing:
 				try:
@@ -407,11 +431,15 @@ def parse_tex_log(data):
 				# Sometimes it's " []" and sometimes it's "[]"...
 				if len(line)>0 and line in [" []", "[]"]:
 					ou_processing = False
+				else:
+					current_badbox += line
+
 			if ou_processing:
 				warnings.append("Malformed LOG file: over/underfull")
 				warnings.append("Please let me know via GitHub")
 				break
 			else:
+				handle_badbox(current_badbox)
 				continue
 
 		# Special case: the bibgerm package, which has comments starting and ending with
@@ -431,8 +459,8 @@ def parse_tex_log(data):
 			debug(" "*len(files) + files[-1] + " (%d)" % (line_num,))
 			files.pop()
 			continue
-		
-		# Special case: the comment package, which puts ")" at the end of a 
+
+		# Special case: the comment package, which puts ")" at the end of a
 		# line beginning with "Excluding comment 'something'"
 		# Since I'm not sure, we match "Excluding comment 'something'" and recycle the rest
 		comment_match = comment_rx.match(line)
@@ -452,7 +480,7 @@ def parse_tex_log(data):
 			debug("special case: numprint")
 			debug(" "*len(files) + files[-1] + " (%d)" % (line_num,))
 			files.pop()
-			continue	
+			continue
 
 		# Special case: xypic's "loaded)" at the BEGINNING of a line. Will check later
 		# for matches AFTER other text.
@@ -507,7 +535,7 @@ def parse_tex_log(data):
 
 		# Useless file matches: {filename.ext} or <filename.ext>. We just throw it out
 		file_useless_match = file_useless1_rx.match(line) or file_useless2_rx.match(line)
-		if file_useless_match: 
+		if file_useless_match:
 			extra = file_useless_match.group(1)
 			debug("Useless file: " + line)
 			debug("Reprocessing " + extra)
@@ -580,12 +608,12 @@ def parse_tex_log(data):
 			# If it's a pdftex error, it's on the current line, so report it
 			if "pdfTeX error" in line:
 				err_msg = line[1:].strip() # remove '!' and possibly spaces
-				# This may or may not have a file location associated with it. 
+				# This may or may not have a file location associated with it.
 				# Be conservative and do not try to report one.
 				errors.append(err_msg)
 				errors.append("Check the TeX log file for more information")
 				continue
-			# Now it's a regular TeX error 
+			# Now it's a regular TeX error
 			err_msg = line[2:] # skip "! "
 			# next time around, err_msg will be set and we'll extract all info
 			state = STATE_REPORT_ERROR
@@ -600,8 +628,7 @@ def parse_tex_log(data):
 			extra = pagenum_begin_match.group(1)
 			debug("Reprocessing " + extra)
 			reprocess_extra = True
-			continue		
-
+			continue
 
 		warning_match = warning_rx.match(line)
 		if warning_match:
@@ -620,7 +647,7 @@ def parse_tex_log(data):
 		print_debug = True
 		for l in parsing:
 			debug(l)
-	return (errors, warnings)
+	return (errors, warnings, badboxes)
 
 
 # If invoked from the command line, parse provided log file
@@ -636,11 +663,15 @@ if __name__ == '__main__':
 		if len(sys.argv) == 3:
 			extra_file_ext = sys.argv[2].split(" ")
 		data = open(logfilename,'r').read()
-		(errors,warnings) = parse_tex_log(data)
+		(errors,warnings,badboxes) = parse_tex_log(data)
 		print ("")
 		print ("Warnings:")
 		for warn in warnings:
 			print (warn.encode('UTF-8'))
+		print ("")
+		print ("Bad boxes:")
+		for box in badboxes:
+			print (box.encode('UTF-8'))
 		print ("")
 		print ("Errors:")
 		for err in errors:

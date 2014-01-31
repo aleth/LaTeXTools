@@ -1,5 +1,5 @@
 # ST2/ST3 compat
-from __future__ import print_function 
+from __future__ import print_function
 import sublime
 if sublime.version() < '3000':
     # we are on ST2 and Python 2.X
@@ -84,7 +84,7 @@ class CmdThread ( threading.Thread ):
 			self.caller.output(" ".join(cmd))
 			self.caller.proc = None
 			return
-		
+
 		# restore path if needed
 		if self.caller.path:
 			os.environ["PATH"] = old_path
@@ -116,7 +116,7 @@ class CmdThread ( threading.Thread ):
 		# 12-10-27 NO! We actually do need rb, because MikTeX on Windows injects Ctrl-Z's in the
 		# log file, and this just causes Python to stop reading the file.
 
-		# OK, this seems solid: first we decode using the self.caller.encoding, 
+		# OK, this seems solid: first we decode using the self.caller.encoding,
 		# then we reencode using the default locale's encoding.
 		# Note: we get this using ST2's own getdefaultencoding(), not the locale module
 		# We ignore bad chars in both cases.
@@ -133,31 +133,34 @@ class CmdThread ( threading.Thread ):
 		# byte array (? whatever read() returns), this does not happen---we only break at \n, etc.
 		# However, we must still decode the resulting lines using the relevant encoding.
 		# 121101 -- moved splitting and decoding logic to parseTeXlog, where it belongs.
-		
+
 		# Note to self: need to think whether we don't want to codecs.open this, too...
-		data = open(self.caller.tex_base + ".log", 'rb').read()		
+		data = open(self.caller.tex_base + ".log", 'rb').read()
 
 		errors = []
 		warnings = []
 
 		try:
-			(errors, warnings) = parseTeXlog.parse_tex_log(data)
+			(errors, warnings, badboxes) = parseTeXlog.parse_tex_log(data)
 			content = ["",""]
 			if errors:
-				content.append("There were errors in your LaTeX source") 
+				content.append("There were errors in your LaTeX source")
 				content.append("")
 				content.extend(errors)
 			else:
 				content.append("Texification succeeded: no errors!")
-				content.append("") 
 			if warnings:
 				if errors:
 					content.append("")
-					content.append("There were also warnings.") 
+					content.append("There were also warnings.")
 				else:
-					content.append("However, there were warnings in your LaTeX source") 
+					content.append("However, there were warnings in your LaTeX source")
 				content.append("")
 				content.extend(warnings)
+			if badboxes:
+				content.append("")
+				content.append("Bad boxes detected...")
+				content.extend(badboxes)
 		except Exception as e:
 			content=["",""]
 			content.append("LaTeXtools could not parse the TeX log file")
@@ -187,7 +190,7 @@ class CmdThread ( threading.Thread ):
 class make_pdfCommand(sublime_plugin.WindowCommand):
 
 	def run(self, cmd="", file_regex="", path=""):
-		
+
 		# Try to handle killing
 		if hasattr(self, 'proc') and self.proc: # if we are running, try to kill running process
 			self.output("\n\n### Got request to terminate compilation ###")
@@ -196,7 +199,7 @@ class make_pdfCommand(sublime_plugin.WindowCommand):
 			return
 		else: # either it's the first time we run, or else we have no running processes
 			self.proc = None
-		
+
 		view = self.window.active_view()
 
 		self.file_name = getTeXRoot.get_tex_root(view)
@@ -206,10 +209,10 @@ class make_pdfCommand(sublime_plugin.WindowCommand):
 
 		self.tex_base, self.tex_ext = os.path.splitext(self.file_name)
 		tex_dir = os.path.dirname(self.file_name)
-		
+
 		# Extra paths
 		self.path = path
-			
+
 		# Output panel: from exec.py
 		if not hasattr(self, 'output_view'):
 			self.output_view = self.window.get_output_panel("exec")
@@ -239,7 +242,7 @@ class make_pdfCommand(sublime_plugin.WindowCommand):
 					# Sanity checks
 					if "texify" == self.make_cmd[0]:
 						sublime.error_message("Sorry, cannot select engine using a %!TEX program directive on MikTeX.")
-						return 
+						return
 					if not ("$pdflatex = '%E" in self.make_cmd[3]):
 						sublime.error_message("You are using a custom LaTeX.sublime-build file (in User maybe?). Cannot select engine using a %!TEX program directive.")
 						return
@@ -253,11 +256,11 @@ class make_pdfCommand(sublime_plugin.WindowCommand):
 		if view.is_dirty():
 			print ("saving...")
 			view.run_command('save') # call this on view, not self.window
-		
+
 		if self.tex_ext.upper() != ".TEX":
 			sublime.error_message("%s is not a TeX source file: cannot compile." % (os.path.basename(view.file_name()),))
 			return
-		
+
 		s = platform.system()
 		if s == "Darwin":
 			self.encoding = "UTF-8"
@@ -267,9 +270,9 @@ class make_pdfCommand(sublime_plugin.WindowCommand):
 			self.encoding = "UTF-8"
 		else:
 			sublime.error_message("Platform as yet unsupported. Sorry!")
-			return	
+			return
 		print (self.make_cmd + [self.file_name])
-		
+
 		os.chdir(tex_dir)
 		CmdThread(self).start()
 		print (threading.active_count())
@@ -319,7 +322,7 @@ class make_pdfCommand(sublime_plugin.WindowCommand):
 		# if selection_was_at_end:
 		#     self.output_view.show(self.output_view.size())
 		# self.output_view.end_edit(edit)
-		self.output_view.set_read_only(True)	
+		self.output_view.set_read_only(True)
 
 	# Also from exec.py
 	# Set the selection to the start of the output panel, so next_result works
