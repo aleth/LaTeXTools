@@ -102,8 +102,7 @@ def _add_entries(entry, keywords, titles, years, authors, journals, eprints):
     years.append(entry["year"])
     # For author, if there is an editor, that's good enough
     authors.append(entry["author"] or entry["editor"] or "????")
-    journal = entry["journal"] or entry["booktitle"] or entry["institution"] or entry["publisher"]
-                    or entry["school"] or "????";
+    journal = entry["journal"] or entry["booktitle"] or entry["institution"] or entry["publisher"] or entry["school"] or "????"
     journals.append(journal)
     eprint = entry["eprint"] or ""
     if eprint:
