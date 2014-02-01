@@ -93,6 +93,32 @@ def find_bib_files(rootdir, src, bibfiles, texmfbibhome):
         find_bib_files(rootdir, input_f, bibfiles, texmfbibhome)
 
 
+
+def _add_entries(entry, keywords, titles, years, authors, journals, eprints):
+    """populates the lists for display from the bibtex entries"""
+
+    keywords.append(entry["keyword"])
+    titles.append(entry["title"])
+    years.append(entry["year"])
+    # For author, if there is an editor, that's good enough
+    authors.append(entry["author"] or entry["editor"] or "????")
+    journals.append(entry["journal"] or entry["booktitle"] or entry["institution"] or entry["publisher"]
+                    or entry["school"] or entry["eprint"] or "????")
+    if entry["eprint"]:
+        entry["eprint"] = "[" + entry["eprint"] + "]"
+    eprints.append(entry["eprint"] or "")
+
+
+def _clear_entries(types):
+    """returns a new blank dictionary for the entries"""
+
+    entry = {"keyword": ""}
+    for t in types:
+        entry[t] = ""
+
+    return entry
+
+
 def get_cite_completions(view, point, autocompleting=False):
     line = view.substr(sublime.Region(view.line(point).a, point))
     # print line
@@ -236,9 +262,12 @@ def get_cite_completions(view, point, autocompleting=False):
     # # Note: year can be provided without quotes or braces (yes, I know...)
     # yp = re.compile(r'\byear\s*=\s*(?:\{+|"|\b)\s*(\d+)[\}"]?,?', re.IGNORECASE)
 
+    types = ['author', 'title', 'year', 'editor', 'journal', 'eprint', 'booktitle', 'institution', 'publisher', 'school']
+    typeString = r'|'.join(types)
+
     # This may speed things up
     # So far this captures: the tag, and the THREE possible groups
-    multip = re.compile(r'\b(author|title|year|editor|journal|eprint)\s*=\s*(?:\{|"|\b)(.+?)(?:\}+|"|\b)\s*,?\s*\Z',re.IGNORECASE)
+    multip = re.compile(r'\b(' + typeString + ')\s*=\s*(?:\{|"|\b)(.+?)(?:\}+|"|\b)\s*,?\s*\Z', re.IGNORECASE)
 
     for bibfname in bib_files:
         # # THIS IS NO LONGER NEEDED as find_bib_files() takes care of it
@@ -249,7 +278,7 @@ def get_cite_completions(view, point, autocompleting=False):
         # bibfname = os.path.normpath(os.path.join(texfiledir, bibfname))
         # print repr(bibfname)
         try:
-            bibf = codecs.open(bibfname,'r','UTF-8', 'ignore')  # 'ignore' to be safe
+            bibf = codecs.open(bibfname, 'r', 'UTF-8', 'ignore')  # 'ignore' to be safe
         except IOError:
             print ("Cannot open bibliography file %s !" % (bibfname,))
             sublime.status_message("Cannot open bibliography file %s !" % (bibfname,))
@@ -265,14 +294,9 @@ def get_cite_completions(view, point, autocompleting=False):
         years = []
         journals = []
         eprints = []
-        #
-        entry = {   "keyword": "",
-                    "title": "",
-                    "author": "",
-                    "year": "",
-                    "editor": "",
-                    "journal": "",
-                    "eprint": "" }
+
+        entry = _clear_entries(types)
+
         for line in bib:
             line = line.strip()
             # Let's get rid of irrelevant lines first
@@ -285,27 +309,14 @@ def get_cite_completions(view, point, autocompleting=False):
             if line[0] == "@":
                 # First, see if we can add a record; the keyword must be non-empty, other fields not
                 if entry["keyword"]:
-                    keywords.append(entry["keyword"])
-                    titles.append(entry["title"])
-                    years.append(entry["year"])
-                    # For author, if there is an editor, that's good enough
-                    authors.append(entry["author"] or entry["editor"] or "????")
-                    journals.append(entry["journal"] or entry["eprint"] or "????")
-                    if entry["eprint"]:
-                        entry["eprint"] = "[" + entry["eprint"] + "]"
-                    eprints.append(entry["eprint"] or "")
+                    _add_entries(entry, keywords, titles, years, authors, journals, eprints)
                     # Now reset for the next iteration
-                    entry["keyword"] = ""
-                    entry["title"] = ""
-                    entry["year"] = ""
-                    entry["author"] = ""
-                    entry["editor"] = ""
-                    entry["journal"] = ""
-                    entry["eprint"] = ""
+                    entry = _clear_entries(types)
+
                 # Now see if we get a new keyword
                 kp_match = kp.search(line)
                 if kp_match:
-                    entry["keyword"] = kp_match.group(1) # No longer decode. Was: .decode('ascii','ignore')
+                    entry["keyword"] = kp_match.group(1)  # No longer decode. Was: .decode('ascii','ignore')
                 else:
                     print ("Cannot process this @ line: " + line)
                     print ("Previous record " + entry)
@@ -320,12 +331,8 @@ def get_cite_completions(view, point, autocompleting=False):
             continue
 
         # at the end, we are left with one bib entry
-        keywords.append(entry["keyword"])
-        titles.append(entry["title"])
-        years.append(entry["year"])
-        authors.append(entry["author"] or entry["editor"] or "????")
-        journals.append(entry["journal"] or entry["eprint"] or "????")
-        eprints.append(entry["eprint"] or "")
+        _add_entries(entry, keywords, titles, years, authors, journals, eprints)
+
 
         print ( "Found %d total bib entries" % (len(keywords),) )
 
