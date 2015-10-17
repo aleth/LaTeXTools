@@ -41,7 +41,7 @@ def match(rex, str):
 # recursively search all linked tex files to find all
 # included bibliography tags in the document and extract
 # the absolute filepaths of the bib files
-def find_bib_files(rootdir, src, bibfiles, texmfbibhome):
+def find_bib_files(rootdir, src, bibfiles):
     if src[-4:].lower() != ".tex":
         src = src + ".tex"
 
@@ -90,18 +90,11 @@ def find_bib_files(rootdir, src, bibfiles, texmfbibhome):
 
             if candidate_file is not None and os.path.exists(candidate_file):
                 bibfiles.append(candidate_file)
-# My old texmf search code, hopefully no longer needed.
-#            bff = os.path.normpath(os.path.join(rootdir,bf))
-#            bibfiles.append(bff)
-#            if texmfbibhome:
-#                # Also look in texmf tree
-#                bff = os.path.normpath(os.path.join(texmfbibhome,bf))
-#                bibfiles.append(bff)
 
     # search through input tex files recursively
     for f in re.findall(r'\\(?:input|include)\{[^\}]+\}',src_content):
         input_f = re.search(r'\{([^\}]+)', f).group(1)
-        find_bib_files(rootdir, input_f, bibfiles, texmfbibhome)
+        find_bib_files(rootdir, input_f, bibfiles)
 
 
 
@@ -225,25 +218,9 @@ def get_cite_completions(view, point, autocompleting=False):
         # FIXME: should probably search the buffer instead of giving up
         raise NoBibFilesError()
 
-    # better would be to use : kpsewhich -var-value TEXMFHOME or BIBINPUTS
-    texmfbibhome = None
-    s = sublime.load_settings("LaTeXTools.sublime-settings")
-    texmf = s.get('texmf')
-    if texmf:
-        print ("texmf tree path defined in LaTeXTools settings: " + texmf)
-        try:
-            texmfbibhome = os.path.abspath(texmf + "/bibtex/bib")
-            if not os.path.isdir(texmfbibhome):
-                texmfbibhome = None
-        except:
-            texmfbibhome = None
-            pass
-    if texmfbibhome:
-        print ("Bib path found in texmf : " + repr(texmfbibhome))
-
     print ("TEX root: " + repr(root))
     bib_files = []
-    find_bib_files(os.path.dirname(root), root, bib_files, texmfbibhome)
+    find_bib_files(os.path.dirname(root), root, bib_files)
     # remove duplicate bib files
     bib_files = list(set(bib_files))
     print ("Bib files found: ")
