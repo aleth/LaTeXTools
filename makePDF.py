@@ -117,7 +117,7 @@ class CmdThread ( threading.Thread ):
 				elif self.caller.path:
 					os.environ["PATH"] = old_path
 				return
-			
+
 			# Now actually invoke the command, making sure we allow for killing
 			# First, save process handle into caller; then communicate (which blocks)
 			self.caller.proc = proc
@@ -161,7 +161,7 @@ class CmdThread ( threading.Thread ):
 
 		# Note to self: need to think whether we don't want to codecs.open this, too...
 		# Also, we may want to move part of this logic to the builder...
-		data = open(self.caller.tex_base + ".log", 'rb').read()		
+		data = open(self.caller.tex_base + ".log", 'rb').read()
 
 		errors = []
 		warnings = []
@@ -170,7 +170,7 @@ class CmdThread ( threading.Thread ):
 			(errors, warnings, badboxes) = parseTeXlog.parse_tex_log(data)
 			content = ["",""]
 			if errors:
-				content.append("Errors:") 
+				content.append("Errors:")
 				content.append("")
 				content.extend(errors)
 			else:
@@ -179,13 +179,32 @@ class CmdThread ( threading.Thread ):
 				if errors:
 					content.extend(["", "Warnings:"])
 				else:
-					content[-1] = content[-1] + " Warnings:" 
+					content[-1] = content[-1] + " Warnings:"
 				content.append("")
 				content.extend(warnings)
 			if badboxes:
 				content.append("")
 				content.append("Bad boxes detected...")
 				content.extend(badboxes)
+
+			# hide_build_panel
+			s = sublime.load_settings("LaTeXTools.sublime-settings")
+			hide_panel_level = s.get("hide_build_panel")
+			hide_panel = {
+				"always": True,
+				"no_errors": not errors,
+				"no_warnings": not errors and not warnings,
+				"never": False
+			}.get(hide_panel_level, False)
+			if hide_panel:
+				self.caller.window.run_command("hide_panel", {"panel": "output.exec"})
+				message = "build completed"
+				if errors:
+					message += " with errors"
+				if warnings:
+					message += " and" if errors else " with"
+					message += " warnings"
+				sublime.status_message(message)
 		except Exception as e:
 			content=["",""]
 			content.append("LaTeXtools could not parse the TeX log file")
@@ -224,7 +243,7 @@ class make_pdfCommand(sublime_plugin.WindowCommand):
 
 		self.tex_base, self.tex_ext = os.path.splitext(self.file_name)
 		tex_dir = os.path.dirname(self.file_name)
-		
+
 		# Output panel: from exec.py
 		if not hasattr(self, 'output_view'):
 			self.output_view = self.window.get_output_panel("exec")
@@ -238,7 +257,7 @@ class make_pdfCommand(sublime_plugin.WindowCommand):
 		self.output_view.settings().set("result_base_dir", tex_dir)
 
 		self.window.run_command("show_panel", {"panel": "output.exec"})
-		
+
 		self.output_view.settings().set("result_file_regex", file_regex)
 
 		if view.is_dirty():
@@ -248,7 +267,7 @@ class make_pdfCommand(sublime_plugin.WindowCommand):
 		if self.tex_ext.upper() != ".TEX":
 			sublime.error_message("%s is not a TeX source file: cannot compile." % (os.path.basename(view.file_name()),))
 			return
-		
+
 		self.plat = sublime.platform()
 		if self.plat == "osx":
 			self.encoding = "UTF-8"
@@ -258,8 +277,8 @@ class make_pdfCommand(sublime_plugin.WindowCommand):
 			self.encoding = "UTF-8"
 		else:
 			sublime.error_message("Platform as yet unsupported. Sorry!")
-			return	
-		
+			return
+
 		# Get platform settings, builder, and builder settings
 		s = sublime.load_settings("LaTeXTools.sublime-settings")
 		platform_settings  = s.get(self.plat)
@@ -300,7 +319,7 @@ class make_pdfCommand(sublime_plugin.WindowCommand):
 			sublime.error_message("Cannot find builder " + builder_name + ".\n" \
 							      "Check your LaTeXTools Preferences")
 			return
-		
+
 		# We save the system path and TEMPORARILY add the builders path to it,
 		# so we can simply "import pdfBuilder" in the builder module
 		# For custom builders, we need to add both the LaTeXTools builders
@@ -313,16 +332,16 @@ class make_pdfCommand(sublime_plugin.WindowCommand):
 			sys.path.insert(0, bld_path)
 		builder_module = __import__(builder_name + 'Builder')
 		sys.path[:] = syspath_save
-		
+
 		print(repr(builder_module))
 		builder_class = getattr(builder_module, builder_class_name)
 		print(repr(builder_class))
 		# We should now be able to construct the builder object
 		self.builder = builder_class(self.file_name, self.output, builder_settings, platform_settings)
-		
+
 		# Restore Python system path
 		sys.path[:] = syspath_save
-		
+
 		# Now get the tex binary path from prefs, change directory to
 		# that of the tex root file, and run!
 		self.path = platform_settings['texpath']
