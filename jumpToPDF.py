@@ -7,10 +7,12 @@ if sublime.version() < '3000':
 	_ST3 = False
 	import getTeXRoot
 	from latextools_utils.is_tex_file import is_tex_file
+	from latextools_utils import get_setting
 else:
 	_ST3 = True
 	from . import getTeXRoot
 	from .latextools_utils.is_tex_file import is_tex_file
+	from .latextools_utils import get_setting
 
 
 import sublime_plugin, os.path, subprocess, time
@@ -48,8 +50,7 @@ def get_sublime_executable():
 							return process
 		return None
 
-	s = sublime.load_settings('LaTeXTools.sublime-settings')
-	plat_settings = s.get(sublime.platform(), {})
+	plat_settings = get_setting(sublime.platform(), {})
 	sublime_executable = plat_settings.get('sublime_executable', None)
 
 	if sublime_executable:
@@ -129,9 +130,8 @@ class jump_to_pdfCommand(sublime_plugin.TextCommand):
 		sublime_command = get_sublime_executable()
 
 		if sublime_command is not None:
-			s = sublime.load_settings('LaTeXTools.sublime-settings')
 			platform = sublime.platform()
-			plat_settings = s.get(platform, {})
+			plat_settings = get_setting(platform, {})
 			wait_time = plat_settings.get('keep_focus_delay', 0.5)
 
 			def keep_focus():
@@ -156,14 +156,11 @@ class jump_to_pdfCommand(sublime_plugin.TextCommand):
 
 	def run(self, edit, **args):
 		# Check prefs for PDF focus and sync
-		s = sublime.load_settings("LaTeXTools.sublime-settings")
-		prefs_keep_focus = s.get("keep_focus", True)
-		keep_focus = self.view.settings().get("keep focus",prefs_keep_focus)
-		prefs_forward_sync = s.get("forward_sync", True)
-		forward_sync = self.view.settings().get("forward_sync",prefs_forward_sync)
+		keep_focus = get_setting('keep_focus', True)
+		forward_sync = get_setting('forward_sync', True)
 
-		prefs_lin = s.get("linux")
-		prefs_win = s.get("windows")
+		prefs_lin = get_setting("linux", {})
+		prefs_win = get_setting("windows", {})
 
 		# If invoked from keybinding, we sync
 		# Rationale: if the user invokes the jump command, s/he wants to see the result of the compilation.
