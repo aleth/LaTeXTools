@@ -287,6 +287,14 @@ class make_pdfCommand(sublime_plugin.WindowCommand):
 
 		view = self.view = self.window.active_view()
 
+		if view.is_dirty():
+			print ("saving...")
+			view.run_command('save')  # call this on view, not self.window
+
+		if view.file_name() is None:
+			sublime.error_message('Please save your file before attempting to build.')
+			return
+
 		self.file_name = getTeXRoot.get_tex_root(view)
 		if not os.path.isfile(self.file_name):
 			sublime.error_message(self.file_name + ": file not found.")
@@ -294,6 +302,10 @@ class make_pdfCommand(sublime_plugin.WindowCommand):
 
 		self.tex_base, self.tex_ext = os.path.splitext(self.file_name)
 		tex_dir = os.path.dirname(self.file_name)
+
+		if not is_tex_file(self.file_name):
+			sublime.error_message("%s is not a TeX source file: cannot compile." % (os.path.basename(view.file_name()),))
+			return
 
 		# Output panel: from exec.py
 		if not hasattr(self, 'output_view'):
@@ -310,14 +322,6 @@ class make_pdfCommand(sublime_plugin.WindowCommand):
 		self.window.run_command("show_panel", {"panel": "output.exec"})
 
 		self.output_view.settings().set("result_file_regex", file_regex)
-
-		if view.is_dirty():
-			print ("saving...")
-			view.run_command('save') # call this on view, not self.window
-
-		if not is_tex_file(self.file_name):
-			sublime.error_message("%s is not a TeX source file: cannot compile." % (os.path.basename(view.file_name()),))
-			return
 
 		self.plat = sublime.platform()
 		if self.plat == "osx":
