@@ -872,4 +872,3 @@ def plugin_loaded():
 # ensure plugin_loaded() called on ST2
 if not _ST3:
     plugin_loaded()
->>>>>>> master
