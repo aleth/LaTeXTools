@@ -21,10 +21,19 @@ import codecs
 
 class UnrecognizedRefFormatError(Exception): pass
 
-_ref_special_commands = "|".join(["", "eq", "page", "v", "V", "auto", "name", "c", "C", "cpage"])[::-1]
+_ref_special_commands = "|".join([
+    "", "eq", "page", "v", "V", "auto", "name", "c", "C", "cpage", "sub"
+])[::-1]
 
-OLD_STYLE_REF_REGEX = re.compile(r"([^_]*_)?(p)?fer(" + _ref_special_commands + r")?(?:\\|\b)")
-NEW_STYLE_REF_REGEX = re.compile(r"([^{}]*)\{fer(" + _ref_special_commands + r")?\\(\()?")
+OLD_STYLE_REF_REGEX = re.compile(
+    r"([^_]*_)?(p)?(?:(?:\*(?=ferbus))?fer(" +
+    _ref_special_commands +
+    r")?)(?:\\|\b)"
+)
+NEW_STYLE_REF_REGEX = re.compile(
+    r"([^{}]*)\{(?:(?:\*(?=ferbus))?fer(" +
+    _ref_special_commands +
+    r")?|)\\(\()?")
 
 
 def match(rex, str):
@@ -213,8 +222,7 @@ class LatexRefCompletions(sublime_plugin.EventListener):
 
     def on_query_completions(self, view, prefix, locations):
         # Only trigger within LaTeX
-        if not view.match_selector(locations[0],
-                "text.tex.latex"):
+        if view.score_selector(locations[0], "text.tex.latex") == 0:
             return []
 
         point = locations[0]
@@ -239,7 +247,7 @@ class LatexRefCommand(sublime_plugin.TextCommand):
         # get view and location of first selection, which we expect to be just the cursor position
         view = self.view
         point = view.sel()[0].b
-        print (point)
+        print(point)
         # Only trigger within LaTeX
         # Note using score_selector rather than match_selector
         if not view.score_selector(point,
@@ -255,27 +263,47 @@ class LatexRefCommand(sublime_plugin.TextCommand):
         # filter! Note matching is "less fuzzy" than ST2. Room for improvement...
         completions = [c for c in completions if prefix in c]
 
-        if not completions:
-            sublime.error_message("No label matches %s !" % (prefix,))
-            return
-
         # Note we now generate refs on the fly. Less copying of vectors! Win!
         def on_done(i):
-            print ("latex_ref_completion called with index %d" % (i,))
-            
+            print("latex_ref_completion called with index %d" % (i,))
+
             # Allow user to cancel
-            if i<0:
+            if i < 0:
                 return
 
             ref = completions[i] + post_snippet
-            
 
             # Replace ref expression with reference and possibly post_snippet
-            # The "latex_tools_replace" command is defined in latex_ref_cite_completions.py
-            view.run_command("latex_tools_replace", {"a": new_point_a, "b": new_point_b, "replacement": ref})
+            # The "latex_tools_replace" command is defined in
+            # latex_ref_cite_completions.py
+            view.run_command(
+                "latex_tools_replace",
+                {
+                    "a": new_point_a,
+                    "b": new_point_b,
+                    "replacement": ref
+                }
+            )
             # Unselect the replaced region and leave the caret at the end
             caret = view.sel()[0].b
             view.sel().subtract(view.sel()[0])
             view.sel().add(sublime.Region(caret, caret))
-        
-        view.window().show_quick_panel(completions, on_done)
+
+        completions_length = len(completions)
+        if completions_length == 0:
+            sublime.error_message("No label matches %s !" % (prefix,))
+        elif completions_length == 1:
+            view.run_command(
+                "latex_tools_replace",
+                {
+                    "a": new_point_a,
+                    "b": new_point_b,
+                    "replacement": completions[0] + post_snippet
+                }
+            )
+            # Unselect the replaced region and leave the caret at the end
+            caret = view.sel()[0].b
+            view.sel().subtract(view.sel()[0])
+            view.sel().add(sublime.Region(caret, caret))
+        else:
+            view.window().show_quick_panel(completions, on_done)

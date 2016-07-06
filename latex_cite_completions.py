@@ -140,7 +140,7 @@ OLD_STYLE_CITE_REGEX = re.compile(r"([^_]*_)?([a-zX*]*?)etic(?:\\|\b)")
 #               ...[prenote][postnote]{key}
 #       )
 #       (?:(?!(?:p|P|f|ft|s|S|t|T|a|A)?volcites)
-#           (?:[A-Z]?[a-z]*c)|C)ites
+#           (?:[A-Z]?[a-z]*c)|C)ites(?!style)
 #           (?:\([^)]*\)){0,2}
 #           (?:(?:\[[^\]]*\]){0,2}\{(?:(?:[^{},]*,)*)?(?:\}(?=.*?\{))?){1,}|
 #       (?#
@@ -150,84 +150,41 @@ OLD_STYLE_CITE_REGEX = re.compile(r"([^_]*_)?([a-zX*]*?)etic(?:\\|\b)")
 #           \cite[<prenote>][<postnote>]{key}
 #       )
 #       (?:(?!(?:p|P|f|ft|s|S|t|T|a|A)?volcite|mcite)
-#           (?:[A-Z]?[a-z]*c)|C)ite(?!reset|style)([a-zX*]*?)
+#           (?:[A-Z]?[a-z]*c)|C)ite(?!reset\*?|style)([a-zX*]*?)
 #           ([.*?]){0,2}(?:\[[^\]]*\]){0,2}\{(?:(?:[^{},]*,)*)?|
 #       (?#
 #           ninth branch matches apacite commands
 #           syntax is:
 #           \citeA<prenote>[postnote]{key}
 #       )
-#       cite(?:(?:author|year)(?:NP)?|NP|A)?(?:<[^>]*>)?(?:\[[^\]]*\])?\{(?:(?:[^{},]*,)*)?)$
+#       (?:mask)?(?:full|short)cite
+#           (?:(?:author|year)(?:NP)?|NP|A)?
+#           (?:<[^>]*>)?(?:\[[^\]]*\])?\{(?:(?:[^{},]*,)*)?)$
 NEW_STYLE_CITE_REGEX = re.compile(
     r"""(?:
-            (?#
-                first branch matches \foreigntextquote,
-                \hypentextquote, \foreignblockquote, \hyphenblockquote,
-                \hybridblockquote and starred versions
-                syntax is:
-                \foreigntextquote{lang}[key][punct]{text}
-            )
             (?:(?P<prefix1>[^\[\],]*)(?:,[^\[\],]*)*\[\}[^\{]*\{
                 \*?etouq(?:kcolb|txet)(?:ngierof|nehpyh|(?<=kcolb)dirbyh))|
-            (?#
-                second branch matches \textquote, \blockquote and
-                starred versions
-                syntax is:
-                \textquote[key]{text}
-            )
             (?:(?P<prefix2>[^\[\],]*)(?:,[^\[\],]*)*\[\*?etouq(?:kcolb|txet))|
-            (?#
-                third branch matches \foreigntextcquote,
-                \hyphentextcquote, \foreignblockcquote, \hypenblockcquote,
-                \hybridblockcquote and starred versions
-                syntax is:
-                \foreigntextcquote{lang}[prenote][postnote]{key}{text}
-            )
             (?:(?P<prefix3>[^{},]*)(?:,[^{},]*)*\{(?:\][^\[]*\[){0,2}\}[^\{]*\{
                 \*?etouqc(?:kcolb|txet)(?:ngierof|nehpyh|(?<=kcolb)dirbyh))|
-            (?#
-                fourth branch matches \textcquote, \blockcquote and
-                starred versions
-                syntax is:
-                \textcquote[prenote][postnote]{key}{text}
-            )
             (?:(?P<prefix4>[^{},]*)(?:,[^{},]*)*\{(?:\][^\[]*\[){0,2}
                 \*?etouqc(?:kcolb|txet))|
-            (?#
-                fifth branch matches \volcite and friends
-                syntax is:
-                \volcite[prenote]{volume}[page]{key}
-            )
             (?:(?P<prefix5>[^{},]*)(?:,[^{},]*)*\{(?:\][^\[]*\[)?\}[^\{}]*\{(?:\][^\[]*\[)?
                 eticlov(?:p|P|f|ft|s|S|t|T|a|A)?)|
-            (?#
-                sixth branch matches \volcites and friends
-            )
             (?:(?P<prefix6>[^{},]*)(?:,[^{},]*)*\{(?:\][^\[]*\[)?\}[^\{}]*\{(?:\][^\[]*\[)?
                 (?:\}[^\{}]*\{(?:\][^\[]*\[)?\}[^\{}]*\{(?:\][^\[]*\[)?)*
                 (?:\)[^(]*\(){0,2}
                 seticlov(?:p|P|f|ft|s|S|t|T|a|A)?)|
-            (?#
-                seventh branch matches \cites and friends, excluding \volcite
-            )
             (?:(?P<prefix7>[^{},]*)(?:,[^{},]*)*\{(?:\][^\[]*\[){0,2}
                 (?:\}[^\}]*\{(?:\][^\[]*\[){0,2})*
-                (?:[\.\*\?]){0,2}(?:\)[^(]*\(){0,2}([a-zX\*]*?)
+                (?:[\.\*\?]){0,2}(?:\)[^(]*\(){0,2}
                 seti(?:C|c(?!lov)[a-z]*[A-Z]?))|
-            (?#
-                eighth branch matches most everything else, excluding \volcite,
-                \mcite, \citereset and \citestyle
-                syntax is:
-                \cite[prenote][postnote]{key}
-            )
             (?:(?P<prefix8>[^{},]*)(?:,[^{},]*)*\{(?:\][^\[]*\[){0,2}
-                (?:[\.\*\?]){0,2}(?!teser|elyts)(?P<fancy_cite>[a-zX\*]*?)
+                (?:[\.\*\?]){0,2}(?!\*?teser|elyts)(?P<fancy_cite>[a-zX\*]*?)
                 eti(?:C|c(?!lov|m\\)[a-z]*[A-Z]?))|
-            (?#
-                ninth branch matches apacite commands
-            )
             (?:(?P<prefix9>[^{},]*)(?:,[^{},]*)*\{(?:\][^\[]*\[)?
-                (?:>[^<]*<)?(?:(?:PN)?(?:raey|rohtua)|PN|A)?etic)
+                (?:>[^<]*<)?(?:(?:PN)?(?:raey|rohtua)|PN|A)?etic
+                (?:lluf|trohs)?(?:ksam)?)
         )\\""", re.X)
 
 def match(rex, str):
@@ -400,16 +357,20 @@ def run_plugin_command(command, *args, **kwargs):
 
         return result
 
-    plugins = get_setting('bibliography', ['traditional_bibliography'])
+    plugins = get_setting('bibliography', ['traditional'])
     if not plugins:
         print('bibliography setting is blank. Loading traditional plugin.')
-        plugins = 'traditional_bibliography'
+        plugins = 'traditional'
 
     result = None
     if isinstance(plugins, strbase):
+        if not plugins.endswith('_bibliography'):
+            plugins = '{0}_bibliography'.format(plugins)
         result = _run_command(plugins)
     else:
         for plugin_name in plugins:
+            if not plugin_name.endswith('_bibliography'):
+                plugins = '{0}_bibliography'.format(plugins)
             try:
                 result = _run_command(plugin_name)
             except BibPluginError:
@@ -439,7 +400,9 @@ def get_author_short(authors):
     # split authors using ' and ' and get last name for 'last, first' format
     authors = [a.split(", ")[0].strip(' ') for a in authors.split(" and ")]
     # get last name for 'first last' format (preserve {...} text)
-    authors = [a.split(" ")[-1] if a[-1] != '}' or a.find('{') == -1 else re.sub(r'{|}', '', a[len(a) - a[::-1].index('{'):-1]) for a in authors]
+    authors = [a.split(" ")[-1] if not('{' in a and a.endswith('}'))
+               else re.sub(r'{|}', '', a[a.rindex('{') + 1:-1])
+               for a in authors if len(a) > 0]
 
     # truncate and add 'et al.'
     if len(authors) > 2:
@@ -717,8 +680,7 @@ class LatexCiteCompletions(sublime_plugin.EventListener):
 
     def on_query_completions(self, view, prefix, locations):
         # Only trigger within LaTeX
-        if not view.match_selector(locations[0],
-                "text.tex.latex"):
+        if view.score_selector(locations[0], "text.tex.latex") == 0:
             return []
 
         point = locations[0]
@@ -861,7 +823,6 @@ class LatexCiteCommand(sublime_plugin.TextCommand):
                                         for completion in completions], on_done)
 
 def plugin_loaded():
-    latextools_plugin.add_whitelist_module('latex_chars')
     # load plugins from the bibliography_plugins dir of LaTeXTools if it exists
     # this allows us to have pre-packaged plugins that won't require any user
     # setup

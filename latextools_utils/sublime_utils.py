@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import json
 import os
 import re
@@ -7,8 +9,10 @@ import sys
 
 try:
 	from latextools_utils.settings import get_setting
+	from latextools_utils.system import which
 except ImportError:
 	from .settings import get_setting
+	from .system import which
 
 
 __all__ = ['normalize_path', 'get_project_file_name']
@@ -78,9 +82,8 @@ def get_sublime_exe():
     # are we on ST3
     if hasattr(sublime, 'executable_path'):
         get_sublime_exe.result = sublime.executable_path()
-
         # on osx, the executable does not function the same as subl
-        if platform== 'osx':
+        if platform == 'osx':
             get_sublime_exe.result = os.path.normpath(
                 os.path.join(
                     os.path.dirname(get_sublime_exe.result),
@@ -90,6 +93,31 @@ def get_sublime_exe():
                     'subl'
                 )
             )
+        # on linux, it is preferable to use subl if it points to the
+        # correct version see issue #710 for a case where this is useful
+        elif (
+            platform == 'linux' and
+            not get_sublime_exe.result.endswith('subl')
+        ):
+            subl = which('subl')
+            if subl is not None:
+                try:
+                    p = subprocess.Popen(
+                        [subl, '-v'],
+                        stdout=subprocess.PIPE,
+                        env=os.environ
+                    )
+                except:
+                    pass
+                else:
+                    stdout, _ = p.communicate()
+
+                    if p.returncode == 0:
+                        m = SUBLIME_VERSION.search(stdout.decode('utf8'))
+                        if m and m.group(1) == sublime.version():
+                            get_sublime_exe.result = subl
+
+        return get_sublime_exe.result
     # in ST2 on Windows the Python executable is actually "sublime_text"
     elif platform == 'windows' and sys.executable != 'python' and \
             os.path.isabs(sys.executable):
@@ -162,10 +190,10 @@ def get_sublime_exe():
                     get_sublime_exe.result = result
                     return result
 
-
     print(
-        'Cannot determine the path to your Sublime installation. Please ' +
-        'set the "sublime_executable" setting in your settings for your platform.'
+        'Cannot determine the path to your Sublime installation. Please '
+        'set the "sublime_executable" setting in your settings for your '
+        'platform.'
     )
 
     return None

@@ -69,6 +69,10 @@
 	// files that match one of the configured `tex_file_exts`
 	"latextools_set_syntax": true,
 
+	// set to true to use BibLaTeX instead of BibTex for bibliography completions
+	// can also be set on a per-project basis
+	"use_biblatex": false,
+
 	// the mapping from the locales to the dictionaries for the 
 	// `%!TEX spellcheck` directive, where the locales must be all lowercase
 	// and separated by a minus sign (-). The dictionaries must be valid path
@@ -124,14 +128,15 @@
 	"linux" : {
 		// Path used when invoking tex & friends; MUST include $PATH
 		"texpath" : "$PATH:/usr/texbin",
-		// Command to invoke Python 2. Useful if you have both Python 2 and Python 3 on your system,
-		// and "python" by default is linked to Python 3. If blank, "python" is used
-		// Note: ST3 uses Python 3 internally, but the evince scripts need Python 2
-		"python2": "",
+		// Command to invoke Python. Useful if you have Python installed in a
+		// non-standard location or want to use a particular version of python.
+		// Both Python2 and Python3 are supported, but must have the DBus bindings
+		// installed.
+		"python": "",
 		// The name of the ST2 or ST3 executable. On Ubuntu, both subl and sublime-text are
 		// available for ST2; adjust as needed for other platforms, and for ST3
 		"sublime": "sublime-text",
-		// How long to wait after evince has launched before sending a sync message
+		// How long to wait after evince or okular has launched before sending a sync message
 		// in seconds, floating point; choose 2.0 or 3.0 on a slower machine, 0.5 on a fast one
 		// Note: only tweak this if sync after launching the PDF viewer does not seem to work,
 		// or if the PDF viewer opens instantly and you don't want to wait.
@@ -145,6 +150,96 @@
 		// adjusted depending on your machine and configuration.
 		"keep_focus_delay": 0.5
 	},
+
+// ------------------------------------------------------------------
+// Output Directory settings settings
+// ------------------------------------------------------------------
+
+	// OPTION: "aux_directory"
+	// Specifies the auxiliary directory
+	// Possible values:
+	//
+	// ""				the default; does not use any auxiliary directory
+	//
+	// path				the path to the auxiliary directory; if this is
+	//					not an absolute path it is interpreted as a
+	//					path relative to the main tex file
+	//
+	// "<<temp>>"		the auxiliary directory will be a temporary
+	//					directory generated in as secure a manner as
+	//					possible; note that this temporary directory
+	//					is only valid until ST is restarted and will
+	//					be deleted on the next start-up
+	//
+	// "<<project>>"	this creates an auxiliary directory in the same
+	//					folder as the main tex file; the name is the
+	//					MD5 hash of the absolute path of the main file;
+	//					unlike <<temp>> this directory will persist
+	//
+	// "<<cache>>"		this creates an auxiliary directory in the ST
+	//					cache directory on ST3 or a suitable directory
+	//					on ST2; unlike <<temp>> this directory will
+	//					persist; unlike <<project>>, it will not be
+	//					in the same directory as the main tex file
+	//
+	// NOTE: This setting will be overridden by the corresponding
+	// %!TEX directive if any; also, while it is possible to define
+	// a global value here, it may make more sense to define this
+	// value in your project settings if you use STs project feature
+	// if you do so, however, note that the path will be interpreted
+	// relative to the location of your project file
+
+	"aux_directory": "",
+
+	// OPTION: "output_directory"
+	// Specifies the output directory
+	// Possible values:
+	//
+	// ""				the default; does not use any output directory
+	//
+	// path				the path to the output directory; if this is
+	//					not an absolute path it is interpreted as a
+	//					path relative to the main tex file
+	//
+	// "<<temp>>"		the output directory will be a temporary
+	//					directory generated in as secure a manner as
+	//					possible; note that this temporary directory
+	//					is only valid until ST is restarted and will
+	//					be deleted on the next start-up
+	//
+	// "<<project>>"	this creates an output directory in the same
+	//					folder as the main tex file; the name is the
+	//					MD5 hash of the absolute path of the main file;
+	//					unlike <<temp>> this directory will persist
+	//
+	// "<<cache>>"		this creates an output directory in the ST
+	//					cache directory on ST3 or a suitable directory
+	//					on ST2; unlike <<temp>> this directory will
+	//					persist; unlike <<project>>, it will not be
+	//					in the same directory as the main tex file
+	//
+	// NOTE: This setting will be overridden by the corresponding
+	// %!TEX directive if any; also, while it is possible to define
+	// a global value here, it may make more sense to define this
+	// value in your project settings if you use STs project feature
+	// if you do so, however, note that the path will be interpreted
+	// relative to the location of your project file
+
+	"output_directory": "",
+
+	// OPTION: "jobname"
+	// Specifies the jobname to use when building the document
+
+	"jobname": "",
+
+	// OPTION: "copy_output_on_build"
+	// Specifies whether to copy the final PDF file to the same folder
+	// as the main tex file; if it is neither true nor false it must be
+	// as list of extensions of the files to copy into the same folder as
+	// the main tex file; this  only applies if an output directory is
+	// set via a setting or a `%!TEX` directive
+
+	"copy_output_on_build": true,
 
 // ------------------------------------------------------------------
 // Build engine settings
@@ -243,6 +338,8 @@
 	//
 	// "sumatra"		uses SumatraPDF; this is the default on
 	//					Windows
+	//
+	// "zathura"		uses Zathura to open the pdf
 	"viewer": "",
 
 	// OPTION: "viewer_settings"
@@ -274,62 +371,6 @@
 	// opening of included images, when no extension is written
 	"image_types": ["png", "pdf", "jpg", "jpeg", "eps"],
 
-	// the commands to open image files. The extensions will be matched from top to bottom.
-	// If no extension is given, all extensions will be matched.
-	// If there is no match the image will be opened with Sublime Text.
-	// the extension:
-	//		can either be a string for one extension
-	//		or an array of string to match more than one extensions.
-	// the command:
-	//		can be the name to start the programm. The image file will be passed
-	//			as the argument.
-	//		can be a string as a command with args:
-	//			e.g. "open -a PixelMator", in this case the file will be appended
-	//			if the position is relevant use "$file" in the string
-	//			e.g. "open -a PixelMator $file"
-	//			this will be substituted by the path to the file
-	"open_image_command": {
-		"osx" : [
-			{
-				// open pdf and eps documents with skim
-				"extension": ["pdf", "eps"],
-				"command": "open -a Skim.app"
-			}
-			// uncomment these lines to open all other images with the default programm
-			// ,
-			// {
-			// 	"command": "open"
-			// }
-		],
-
-		// You might want to use "start" for the default programm used by Windows.
-		"windows": [
-			{
-				// open pdf and eps documents with sumatra (it has to be on your PATH)
-				"extension": ["pdf", "eps"],
-				"command": "SumatraPDF"
-			}
-			// uncomment these lines to open all other images with the default programm
-			// ,
-			// {
-			// 	"command": "start"
-			// }
-		],
-
-		"linux": [
-			{
-				// open pdf documents with evince
-				"extension": "pdf",
-				"command": "evince"
-			}
-			// uncomment these lines to open all other images with the default programm
-			// ,
-			// {
-			// 	"command": "xdg-open"
-			// }
-		]
-	},
-
 // ------------------------------------------------------------------
 // Bibliographic references
 // ------------------------------------------------------------------
@@ -340,13 +381,13 @@
 	//
 	// Possible values:
 	//
-	// "traditional_bibliography" 		the default, regex-based bibliography
-	//									parsing
+	// "traditional" 		the default, regex-based bibliography 
+	//						parsing
 	//
-	// "new_bibliography"				a newer parser which supports UTF-8 and
-	//									additional fields, but may be slower and
-	//									less well tested.
-	"bibliography": "traditional_bibliography",
+	// "new"				a newer parser which supports UTF-8 and
+	//						additional fields, but may be slower and
+	//						less well tested.
+	"bibliography": "traditional",
 
 	/* This preference sets the format of the quick panel to select citations using wildcards.
 	The setting is a list with one or two string using wildcards for author, title, keyword etc.

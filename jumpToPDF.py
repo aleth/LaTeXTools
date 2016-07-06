@@ -8,6 +8,9 @@ if sublime.version() < '3000':
 	import getTeXRoot
 	from latextools_utils.is_tex_file import is_tex_file
 	from latextools_utils import get_setting
+	from latextools_utils.output_directory import (
+		get_output_directory, get_jobname
+	)
 	from latextools_utils.sublime_utils import get_sublime_exe
 	from latextools_plugin import (
 		get_plugin, add_plugin_path, NoSuchPluginException,
@@ -18,6 +21,9 @@ else:
 	from . import getTeXRoot
 	from .latextools_utils.is_tex_file import is_tex_file
 	from .latextools_utils import get_setting
+	from .latextools_utils.output_directory import (
+		get_output_directory, get_jobname
+	)
 	from .latextools_utils.sublime_utils import get_sublime_exe
 	from .latextools_plugin import (
 		get_plugin, add_plugin_path, NoSuchPluginException,
@@ -113,8 +119,8 @@ def focus_st():
 class JumpToPdf(sublime_plugin.TextCommand):
 	def run(self, edit, **args):
 		# Check prefs for PDF focus and sync
-		keep_focus = get_setting('keep_focus', True)
-		forward_sync = get_setting('forward_sync', True)
+		keep_focus = args.get('keep_focus', get_setting('keep_focus', True))
+		forward_sync = args.get('forward_sync', get_setting('forward_sync', True))
 
 		# If invoked from keybinding, we sync
 		# Rationale: if the user invokes the jump command, s/he wants to see the result of the compilation.
@@ -132,11 +138,30 @@ class JumpToPdf(sublime_plugin.TextCommand):
 			return
 
 		root = getTeXRoot.get_tex_root(self.view)
-		print ("!TEX root = ", repr(root) ) # need something better here, but this works.
-		rootName, rootExt = os.path.splitext(root)
-		pdffile = rootName + u'.pdf'
+		file_name = get_jobname(root)
+
+
+		output_directory = get_output_directory(self.view)
+		if output_directory is None:
+			root = getTeXRoot.get_tex_root(self.view)
+			pdffile = os.path.join(
+				os.path.dirname(root),
+				file_name + u'.pdf'
+			)
+		else:
+			pdffile = os.path.join(
+				output_directory,
+				file_name + u'.pdf'
+			)
+
+			if not os.path.exists(pdffile):
+				pdffile = os.path.join(
+					os.path.dirname(root),
+					file_name + u'.pdf'
+				)
+
 		(line, col) = self.view.rowcol(self.view.sel()[0].end())
-		print ("Jump to: ", line,col)
+		print("Jump to: ", line, col)
 		# column is actually ignored up to 0.94
 		# HACK? It seems we get better results incrementing line
 		line += 1
@@ -190,9 +215,27 @@ class ViewPdf(sublime_plugin.WindowCommand):
 			pdffile = args.pop('file', None)
 		else:
 			view = self.window.active_view()
+
 			root = getTeXRoot.get_tex_root(view)
-			print("!TEX root = ", repr(root))
-			pdffile = os.path.splitext(root)[0] + '.pdf'
+			file_name = get_jobname(root)
+
+			output_directory = get_output_directory(view)
+			if output_directory is None:
+				pdffile = os.path.join(
+					os.path.dirname(root),
+					file_name + u'.pdf'
+				)
+			else:
+				pdffile = os.path.join(
+					output_directory,
+					file_name + u'.pdf'
+				)
+
+				if not os.path.exists(pdffile):
+					pdffile = os.path.join(
+						os.path.dirname(root),
+						file_name + u'.pdf'
+					)
 
 		# since we potentially accept an argument, add some extra
 		# safety checks
@@ -200,9 +243,9 @@ class ViewPdf(sublime_plugin.WindowCommand):
 			print('No PDF file found.')
 			return
 		elif not os.path.exists(pdffile):
-			print('PDF file "' + pdffile + '" does not exist.')
+			print(u'PDF file "{0}" does not exist.'.format(pdffile))
 			sublime.error_message(
-				'PDF file "' + pdffile + '" does not exist.'
+				u'PDF file "{0}" does not exist.'.format(pdffile)
 			)
 			return
 
