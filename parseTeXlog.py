@@ -263,11 +263,7 @@ def parse_tex_log(data):
 		# also, the **<file name> line may be long, but we skip it, too (to avoid edge cases)
 		# We make sure we are NOT reprocessing a line!!!
 		# Also, we make sure we do not have a filename match, or it would be clobbered by exending!
-<<<<<<< HEAD
-		if (not reprocess_extra) and line_num>1 and linelen>=79 and line[0:2] != "**":
-=======
 		if (not reprocess_extra) and line_num > 1 and linelen >= 79 and line[0:2] != "**":
->>>>>>> master
 			debug ("Line %d is %d characters long; last char is %s" % (line_num, len(line), line[-1]))
 			# HEURISTICS HERE
 			extend_line = True
