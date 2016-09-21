@@ -77,8 +77,8 @@ OLD_STYLE_CITE_REGEX = re.compile(r"([^_]*_)?\*?([a-z]*?)etic\\")
 # forward version with explanation:
 # \\
 #    (?:
-#       (?#
-#           first branch matches \foreigntextquote,
+#       (?# 
+#           first branch matches \foreigntextquote, 
 #           \hypentextquote, \foreignblockquote, \hyphenblockquote,
 #           \hybridblockquote and starred versions
 #           syntax is:
@@ -103,7 +103,7 @@ OLD_STYLE_CITE_REGEX = re.compile(r"([^_]*_)?\*?([a-z]*?)etic\\")
 #       (?:foreign|hyphen|hybrid(?=block))(?:text|block)cquote\*?
 #           \{[^}]*\}(?:\[[^\]]*\]){0,2}\{(?:(?:[^{},]*,)*)?|
 #       (?#
-#           fourth branch matches \textcquote, \blockcquote and
+#           fourth branch matches \textcquote, \blockcquote and 
 #           starred versions
 #           syntax is:
 #           \textcquote[prenote][postnote]{key}{text}
@@ -408,7 +408,7 @@ def get_cite_completions(view):
 # Based on html_completions.py
 # see also latex_ref_completions.py
 #
-# It expands citations; activated by
+# It expands citations; activated by 
 # cite<tab>
 # citep<tab> and friends
 #
@@ -416,7 +416,7 @@ def get_cite_completions(view):
 #
 # cite_sec
 #
-# to select all citation keywords starting with "sec".
+# to select all citation keywords starting with "sec". 
 #
 # There is only one problem: if you have a keyword "sec:intro", for instance,
 # doing "cite_intro:" will find it correctly, but when you insert it, this will be done
