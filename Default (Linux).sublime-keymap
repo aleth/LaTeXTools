@@ -15,6 +15,17 @@ LaTeX Package keymap for Linux
 			{"key": "selector", "operator": "equal", "operand": "text.tex.latex"}],
 		"command": "expand_selection", "args": {"to": "line"} },
 
+	// Avoid weird brace-matching behavior with indented text
+	{ "keys": ["{"], "command": "insert_snippet", "args": {"contents": "{$0}"}, "context":
+		[
+			{ "key": "indented_block", "match_all": true },
+			{"key": "selector", "operator": "equal", "operand": "text.tex.latex"},
+			{ "key": "setting.auto_match_enabled", "operator": "equal", "operand": true },
+			{ "key": "selection_empty", "operator": "equal", "operand": true, "match_all": true },
+			{ "key": "following_text", "operator": "regex_match", "operand": "^$", "match_all": true }
+		]
+	},
+
 	// Insert latex command or environment, and close current environment
 	{ 	"keys": ["ctrl+l","c"], 
 		"context":  [
@@ -370,11 +381,18 @@ LaTeX Package keymap for Linux
 		]
 	},
 	// automatic addition of new \items when hitting Shift+Enter in a list environment
-	{ "keys": ["shift+enter"], "command": "insert_snippet", "args": {"contents": "\n\\item $0"}, 
-	"context":  
+	{ "keys": ["shift+enter"], "command": "insert_snippet", "args": {"contents": "\n\\item $0"},
+	"context":
 		[
-			{"key": "selector", "operator": "equal", "operand": "meta.function.environment.list.latex"},
-			{ "key": "setting.auto_match_enabled", "operator": "equal", "operand": true },
+			{ "key": "selector", "operator": "equal", "operand": "text.tex.latex meta.environment.list, meta.function.environment.list.latex"},
+			{ "key": "selection_empty", "operator": "equal", "operand": true, "match_all": true }
+		]
+	},
+	// create a \item[] in a description environment
+	{ "keys": ["shift+enter"], "command": "insert_snippet", "args": {"contents": "\n\\item[$1] $0"},
+	"context":
+		[
+			{ "key": "selector", "operator": "equal", "operand": "text.tex.latex meta.environment.list.description"},
 			{ "key": "selection_empty", "operator": "equal", "operand": true, "match_all": true }
 		]
 	},
@@ -416,16 +434,5 @@ LaTeX Package keymap for Linux
 	{	"keys": ["ctrl+l", "w"],
 		"context":  [
 			{"key": "selector", "operator": "equal", "operand": "text.tex.latex"}],
-		"command": "texcount" },
-
-	// Avoid weird brace-matching behavior with indented text
-	{ "keys": ["{"], "command": "insert_snippet", "args": {"contents": "{$0}"}, "context":
-		[
-			{ "key": "indented_block", "match_all": true },
-			{"key": "selector", "operator": "equal", "operand": "text.tex.latex"},
-			{ "key": "setting.auto_match_enabled", "operator": "equal", "operand": true },
-			{ "key": "selection_empty", "operator": "equal", "operand": true, "match_all": true },
-			{ "key": "following_text", "operator": "regex_match", "operand": "^$", "match_all": true }
-		]
-	}
+		"command": "texcount" }
 ]
