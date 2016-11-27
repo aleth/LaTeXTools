@@ -10,14 +10,18 @@ Additional contributors (*thank you thank you thank you*): first of all, Wallace
 
 *If you have contributed and I haven't acknowledged you, email me!*
 
-*Latest revision:* v3.11.2 (2016-09-28).
+*Latest revision:* v3.12.8 (2016-11-15).
 
 *Headline features*:
 
-* Less obtrusive build panel
-* Improved outline view (`C-r`)
-* Auto-completions for magic comments
-* Phantoms are used to display error messsages (dev versions only)
+- Live-preview math equations while writing them (ST3 only)
+- Hover over included graphics to show them in a popup (ST3 only)
+- LaTeX build variants (`C-shift-b`) now supports alternative and more flexible builders
+- Jump to label usages are added to jump-to-anywhere
+- Added a command to search for LaTeX-commands in the whole document 
+- Added support for the glossary package
+- Improvements in CWL completions for environments
+- Added a command to check your system setup
 
 ## Introduction
 
@@ -72,6 +76,23 @@ In case you are using an old version of Skim, you can always choose the Custom p
 
 in the Command field, and `"%file":%line` in the Arguments field. (This is correct as of 7/18/2013; you may want to double-check that ST3 is indeed in `/Applications/Sublime Text.app`; just go to the Applications folder in the Finder. Adapt as needed for ST2).
 
+#### Setup ImageMagick and Ghostscript
+
+If you are using Sublime Text 3 version 3118 or later and want to use the image and equation previewing features, you will need to ensure that both ImageMagick 6 or higher and Ghostscript 9 or higher are installed and available on your machine. If you installed the full MacTeX distribution, Ghostscript is already included. If you installed the BasicTeX distribution, you will need to install Ghostscript yourself.
+
+The easiest way to install ImageMagick or Ghostscript is to use either [Homebrew](http://brew.sh/) or [MacPorts](https://www.macports.org/). Installing should be as simple as typing the relevant command in the Terminal:
+
+|Product|Package Manager|Command|
+|-------|---------------|-------|
+|ImageMagick|Homebrew|`brew install imagemagick`|
+|ImageMagick|Mac Ports|`sudo port install ImageMagick`|
+|Ghostscript|Homebrew|`brew install ghostscript`|
+|Ghostscript|Mac Ports|`sudo port install ghostscript`|
+
+If you do not use Homebrew or MacPorts (and you should), you will need to compile and install binaries from source. The source for Ghostscript can be found [on this page](http://ghostscript.com/download/gsdnld.html) and the source and compilation instructions for ImageMagick can be found [on this page](http://www.imagemagick.org/script/binary-releases.php#macosx).
+
+You can use the **LaTeXTools: Check System** command to verify that these are installed and setup in a place LaTeXTools can find.
+
 #### Setup LaTeXTools
 
 Finally, edit the LaTeXtools settings to make sure that the configuration reflects your preferred TeX distribution. Open the settings from the menu via **Preferences | Package Settings | LaTeXTools | Settings - User** and scroll down to the section titled "Platform settings". Look at the block for your OS, namely `"osx"`. Within that block, verify that the `"texpath"` setting is correct. Note that `"texpath"` **must** include `$PATH` somewhere.
@@ -110,6 +131,17 @@ sumatrapdf.exe -inverse-search "\"C:\Program Files\Sublime Text 3\sublime_text.e
 
 I'm sorry this is not straightforward---it's not my fault :-)
 
+#### Setup ImageMagick and Ghostscript
+
+If you are using Sublime Text 3 version 3118 or later and want to use the image and equation previewing features, you will need to ensure that both ImageMagick 6 or higher and Ghostscript 9 or higher are installed and available on your machine.
+
+* If you're using TeXLive and you installed the default profile, you should already have Ghostscript installed in `<drive>:path\to\texlive\<year>\tlpkg\tlgs\bin`. Make sure this is added to your `PATH` system variable or to the `texpath` when setting up LaTeXTools.
+* If you are using MiKTeX or do not have Ghostscript installed with your TeXLive distribution, you can simple download and install the [latest release here](http://ghostscript.com/download/gsdnld.html). MiKTeX does bundle a version of Ghostscript, but ImageMagick will not find it.
+
+To install ImageMagick, download and install a release from [the ImageMagick website](http://www.imagemagick.org/script/binary-releases.php#windows). For the easiest setup, make sure you select the **Add application directory to your system path** option when installing. Otherwise, you will need to either manually add it to your system PATH or add it to your `texpath` setting when setting up LaTeXTools.
+
+You can use the **LaTeXTools: Check System** command to verify that these are installed and setup in a place LaTeXTools can find.
+
 #### Setup LaTeXTools
 
 Finally, edit the LaTeXtools settings to make sure that the configuration reflects your preferred TeX distribution. Open the settings from the menu via **Preferences | Package Settings | LaTeXTools | Settings - User** and scroll down to the section titled "Platform settings". Look at the block for your OS, namely `windows`. Within that block, verify that the `texpath` setting is correct; for MiKTeX, you can leave this empty, i.e., `""`. If you do specify a path, note that it **must** include the system path variable, i.e., `$PATH` (this syntax seems to be OK). Also verify that the `distro` setting is correct: the possible values are `"miktex"` and `"texlive"`.
@@ -126,7 +158,13 @@ Recent versions of MikTeX add themselves to your path automatically, but in case
 
 #### Install TeXLive
 
-You need to install TeXlive; if you are on Ubuntu, note that `apt-get install texlive` will get you a working but incomplete setup. In particular, it will *not* bring in `latexmk`, which is essential to LaTeXTools. You need to install it via `apt-get install latexmk`. If on the other hand you choose to install the TeXlive distro from TUG, `latexmk` comes with it, so you don't need to do anything else.
+You need to install TeXlive. We highly recommend installing the version directly from TUG, which can be found [here](https://www.tug.org/texlive/acquire-netinstall.html) rather than the version included with your distribution, as your distribution may be out of date (maintain a TeX distribution is a time-consuming task).  In particular, if you are on Ubuntu, note that `apt-get install texlive` will get you a working but incomplete setup. For example, it will *not* install `latexmk`, which is essential to LaTeXTools. You need to install it via `apt-get install latexmk`. You can use the **LaTeXTools: Check System** command to ensure that the expected binaries are found.
+
+#### Setup ImageMagick and Ghostscript
+
+If you are using Sublime Text 3 version 3118 or later and want to use the image and equation previewing features, you will need to ensure that both ImageMagick 6 or higher and Ghostscript 9 or higher are installed and available on your machine.
+
+If you installed the full TeXLive profile from TUG, you should already have a version of Ghostscript installed. Otherwise, it can simply be installed using your distribution's package manager. ImageMagick should also be available the same way. Once again, you can use the **LaTeXTools: Check System** command to verify that these are setup.
 
 #### Setup LaTeXTools
 
@@ -173,6 +211,24 @@ As an alternative, to using the `%!TEX root = <master file name>` syntax, if you
 ```
 
 Note that if you specify a relative path as the `TEXroot` in the project file, the path is determined *relative to the location of the project file itself*. It may be less ambiguous to specify an absolute path to the `TEXroot` if possible.
+
+### Previewing
+
+**For technical reasons, all preview functions are only available in Sublime Text Build 3118 and newer.**
+
+LaTeXTools has the ability to preview parts of the document using phantoms or popups. These functions rely on [Ghostscript](http://www.ghostscript.com/) and [ImageMagick](http://www.imagemagick.org) being installed and available on your `texpath`.
+
+#### Math-Live preview
+
+While editing math equations this will preview the result using phantoms.
+By default this will only preview the currently edited environment, but you can also preview all math environments.
+
+#### Preview images
+
+You can preview images included via the `\includegraphics` command.
+By default you can just hover over the image and a popup will appear to show the image.
+You can click on buttons to open the image or the folder, which contains the image.
+It is also possible to show all images at once via phantoms.
 
 ### Spell-checking
 
@@ -286,8 +342,17 @@ The default ST Build command takes care of the following:
 * It parses the tex log file and lists all errors, warnings and, if enabled, bad boxes in an output panel at the bottom of the ST window: click on any error/warning/bad boxes to jump to the corresponding line in the text, or use the ST-standard Next Error/Previous Error commands.
 * It invokes the PDF viewer for your platform and performs a forward search: that is, it displays the PDF page where the text corresponding to the current cursor position is located.
 
+### Selecting Build Variant
 
-### Toggling window focus following a build
+**Keybinding:** `C-shift-b` (standard ST3 keybinding)
+
+LaTeXTools offers a range of build variants to select standard build options. These variants can be used to customize the options passed to the LaTeXTools builder, so that you don't need a project file or to use any of the `%!TEX` directives to change, e.g., the build system used. Variants are provided for the supported builders and for the supported programs.
+
+In addition, custom Sublime build files can be created to add your own variants to standard LaTeXTools commands. For more on this, see the section on [Sublime Build Files](#sublime-build-files).
+
+**Note**: The settings provided by build variants *override* settings specified in the file itself or in your settings. This means, for example, if you select a build variant that changes the program, `%!TEX program` directives or `program` settings will be ignored. If you want to return LaTeXTools back to its default behavior, please select the **LaTeX** build variant.
+
+### Toggling window focus following a build ###
 
 **Keybinding:** `C-l,t,f` (yes, this means `C-l`, then `t`, then `f`)
 
@@ -426,7 +491,9 @@ Selecting any entry in the list will take you to the corresponding place in the 
 This is an IDE-like mouse navigation, which executes a jump depending on the context around the cursor. It is easy to use and intuitive. Just click with the mouse on a command while pressing the modifier key. The corresponding jump will be executed. Supported jump types are:
 
 - Jump to referenced labels (e.g. `\ref`)
+- Show and jump to label usages (e.g. `\label`)
 - Jump to citation entries in bibliography files (e.g. `\cite`)
+- Jump to glossary entries (e.g. `\gls`)
 - Open included files (e.g. `\input` or `\include`)
 - Open root file from `%!TEX root =...` magic comment
 - Open bibliographies (e.g. `\bibliography` or `\addbibresource`)
@@ -544,11 +611,15 @@ The following options are currently available (defaults in parentheses):
 - `cite_auto_trigger` (`true`): if `true`, typing e.g. `\cite{` brings up the citation completion quick panel, without the need to type `C-l,x`. If `false`, you must explicitly type `C-l,x`.
 - `ref_auto_trigger` (`true`): ditto, but for `\ref{` and similar reference commands
 - `fill_auto_trigger` (`true`): ditto, but for package and file inclusion commands (see Fill Helper feature above)
-- `env_auto_trigger` (`true`): ditto, but for environment completions
+- `env_auto_trigger` (`false`): ditto, but for environment completions
+- `glossary_auto_trigger` (`true`): ditto, but for glossary completions
+- `tex_directive_auto_trigger` (`true`): ditto, but for tex directive completions
 - `cwl_autoload` (`true`): whether to load cwl completions based on packages (see the LaTeX-cwl feature) 
 - `cwl_completion` (`prefixed`): when to activate the cwl completion poput (see LaTeX-cwl feature above)
 - `cwl_list` (`["latex-document.cwl", "tex.cwl", "latex-dev", "latex-209.cwl", "latex-l2tabu.cwl", "latex-mathsymbols.cwl"]`): list of cwl files to load
-- `keep_focus` (`true`): if `true`, after compiling a tex file, ST retains the focus; if `false`, the PDF viewer gets the focus. Also note that you can *temporarily* toggle this behavior with `C-l,t,f`. **Note**: If you are on either Windows or Linux you may need to adjust the `sublime_executable` setting for this to work properly. See the **Platform settings** below. This can also be overridden via a key-binding by passing a `keep_focus` argument to `jump_to_pdf`.
+- `keep_focus` (`true`): if `true`, after compiling a tex file, ST retains the focus; if `false`, the PDF viewer gets the focus. Also note that you can *temporarily* toggle this behavior with `C-l,t,f`.This can also be overridden via a key-binding by passing a `keep_focus` argument to `jump_to_pdf`.
+ **Note**: In general, `keep_focus` set to `true` tries to mean "do not *change* the focus". This isn't always possible, since several of the viewers will steal focus by default. In those circumstances, LaTeXTools tries to actively return the focus to Sublime. To disable this, set the `disable_focus_hack` setting to `true`.
+ **Note**: If you are on either Windows or Linux you may need to adjust the `sublime_executable` setting for this to work properly. See the **Platform settings** below.
 - `forward_sync` (`true`): if `true`, after compiling a tex file, the PDF viewer is asked to sync to the position corresponding to the current cursor location in ST. You can also *temporarily* toggle this behavior with `C-l,t,s`. This can also be overridden via a key-binding by passing a `forward_sync` argument to `jump_to_pdf`.
 - `temp_files_exts`: list of file extensions to be considered temporary, and hence deleted using the `C-l, backspace` command.
 - `temp_files_ignored_folders`: subdirectories to skip when deleting temp files.
@@ -557,6 +628,34 @@ The following options are currently available (defaults in parentheses):
 * `use_biblatex`: (`false`): if `true` LaTeXTools will use BibLaTeX defaults for editing `.bib` files. If `false`, LaTeXTools will use BibTeX defaults. See the section on [Support for Editing Bibliographies](#support-for-editing-bibliographies) for details.
 * `tex_spellcheck_paths` (`{}`): A mapping from the locales to the paths of the dictionaries. See the section [Spell-checking](#spell-checking).
 * `word_count_sub_level` (`"none"`): controls the level at which subcounts of words can be generated. Valid values are: `"none"`, `"part"`, `"chapter"`, and `"section"`.
+
+### Preview Settings
+
+#### Math-Live Preview Settings
+
+- `preview_math_mode` (`"selected"`): The mode to preview math environments, possible values are:
+  + `"all"`:       to show a phantom for each math environment
+  + `"selected"`:  to show a phantom only for the currently selected math environment
+  + `"none"`:      to disable math live preview
+- `preview_math_latex_compile_program` (`"pdflatex"`): The program to compile the latex template files, possible values are `"pdflatex"`, `"xelatex"`, `"lualatex"`, `"latex"`.
+- `preview_math_color` (`""`): The color of the text in the preview math phantoms. The format can either be RGB based "#RRGGBB" (e.g. `"#FFFF00"`)
+or a color name (e.g. `"yellow"`) If it is the empty string `""` it will be guessed based in the color scheme.
+- `preview_math_background_color` (`""`): The background color of the preview math phantoms. In contrast to the foreground color you may also edit your colorscheme to change this. The format can either be RGB(A) based `"#RRGGBB"` (e.g. `"#0000FF"` or `"#0000FF50"`) or a color name (e.g. `"blue"`). If it is the empty string `""` the default color will be used.
+- `preview_math_template_packages`: An array containing the used packages for the template as latex code.
+- `preview_math_template_preamble` (`""`): An string of the remaining preamble (not packages) for the file, which generates the math live preview. Can also be an array, with an string for each line (as in the packages). This is useful, if you define math commands or operators on your own. You may change this per project basis.
+- `preview_math_density` (`300`): The density of the preview image. The higher the density the bigger the phantom.
+- `preview_math_scale_quotient` (`2`): If the image is not sharp enough increase this scale to get a better resolution. However also change the density by the same factor to keep the size.
+
+#### Preview Image Settings
+
+- "preview_image_mode": "hover",
+   The preview mode for image preview, possible values are:
+  + `"all"`:       to show a phantom for each includegraphics command
+  + `"selected"`:  to show a phantom only for the currently selected `\includegraphics` command
+  + `"hover"`:     to show a popup if you hover over an includegraphics command
+  + `"none"`:      to disable image preview
+- `preview_popup_image_size` (`200`) and `preview_phantom_image_size` (`150`): The image size in the preview image popup and phantoms. These are the outer dimensions of the maximal size. The image will be scaled down to fit into these dimensions. It can either be an number or an array, which consist of two numbers (x and y), e.g. [200, 150].
+- `preview_image_scale_quotient` (`1`): Increase this number to get a better resolution on high dpi displays. Control the thumbnail image size, which will be generated to preview images, that are not natively supported (like pdf files). E.g. a image size of 300 with a scale quotient of 2 will create a thumbnail with the size 600, which is scaled down in the popup.
 
 ### Platform-Specific Settings
 
@@ -625,6 +724,8 @@ Any other value will be interpretted as the default.
  * `viewer` (`""`): the viewer you want to use. Leave blank (`""`) or set to `"default"`for the platform-specific viewer. Can also be set to `"preview"` if you want to use Preview on OS X, `"okular"` if you want to use Okular on Linux, `"zathura"` is you want to use Zathura on Linux, or `"command"` to run arbitrary commands. For details on the `"command"` option, see the section on the [Command Viewer](#command-viewer).
  * `viewer_settings`: these are viewer-specific settings. Please see the section on [Viewers](#viewers) or the documentation on [Alternate Viewers](#alternate-viewers) for details of what should be set here.
  * `open_pdf_on_build` (`true`): Controls whether LaTeXTools will automatically open the configured PDF viewer on a successful build. If set to `false`, the PDF viewer will only be launched if explicitly requested using `C-l,v` or `C-l,j`.
+ * `disable_focus_hack` (`false`): if `true`, the focus hack that LaTeXTools uses to return focus to Sublime in some circumstances will not be run. **Note**: This does not mean that the *viewer* won't steal the focus, only that LaTeXTools won't try to steal the focus back.
+
 
 ### Bibliographic references settings
 
@@ -822,7 +923,46 @@ In addition, to ensure that forward and backward sync work, you need to ensure t
 
 Finally, please remember that script commands on Windows are run using `cmd.exe` which means that if your script uses any UNC paths will have to use `pushd` and `popd` to properly map and unmap a network drive.
 
-### Customizing the Build System
+### Sublime Build Files
+
+LaTeXTools now has some support for custom `.sublime-build` files or builders specified in your project settings. For an overview of `.sublime-build` files in general, please see [the Unofficial Documentation](http://sublime-text-unofficial-documentation.readthedocs.io/en/latest/reference/build_systems.html) (which is generally a great resource about Sublime Text). For more on adding builders to project files, see [the relevant section of the Sublime documentation](https://www.sublimetext.com/docs/3/projects.html). This section will cover the basics of creating a `.sublime-build` file that works with LaTeXTools.
+
+At a minimum, your `.sublime-build` file must have the following elements:
+
+```json
+{
+	"target": "make_pdf",
+	"selector": "text.tex.latex",
+
+	"osx":
+		{
+			"file_regex": "^(...*?):([0-9]+): ([0-9]*)([^\\.]+)"
+		},
+
+	"windows":
+		{
+			"file_regex": "^((?:.:)?[^:\n\r]*):([0-9]+):?([0-9]+)?:? (.*)$"
+		},
+
+	"linux":
+		{
+			"file_regex": "^(...*?):([0-9]+): ([0-9]*)([^\\.]+)"
+		}
+}
+```
+
+Otherwise, other features may not work as expected. In addition, you can specify the following other parameters:
+
+|Parameter|Description|
+|-----------------|------------------------------------------------------------|
+|`builder`|Overrides the `builder` setting. May refer to any valid LaTeXTools builder.|
+|`program`|Overrides the `program` setting or `%!TEX program` macro. May be one of `pdflatex`, `xelatex`, or `lualatex`|
+|`command`|Overrides the `command` setting, providing the command run by the builder. This is only useful if you use the `traditional` builder. For the format, see the relevant [builder setting](#builder-settings).|
+|`env`|Overrides the `env` setting. Should be a dictionary similar to `env`, but note that when specified in a `.sublime-build` file, it is not, by default, platform-specific.|
+|`path`|Overrides the `texpath` settings. Note that if you set this, you are responsible for ensuring that the appropriate LaTeX install can still be found.|
+|`script_commands`|Overrides the `script_commands` setting used by the `script` builder. This is only useful if the `builder` is also changed to `script`.|
+
+### Custom Builders
 
 Since the release on March 13, 2014 ([v3.1.0](https://github.com/SublimeText/LaTeXTools/tree/v3.1.0)), LaTeXTools has had support for custom build systems, in addition to the default build system, called the "traditional" builder. Details on how to customize the traditional builder are documented above. If neither the traditional builder nor the script builder meet your needs you can also create a completely custom builder which should be able to support just about anything you can imagine. Let me know if you are interested in writing a custom builder!
 
@@ -837,6 +977,10 @@ If you are interested in developing your own builder, please see [our page on th
 ### Preview.app
 
 The Preview.app viewer is very straight-forward. It simply launches Preview.app with the relevant PDF file. Please note that Preview.app *does not* support forward or reverse sync, so you will not have that functionality available. Nevertheless, if you want to avoid installing another PDF viewer, this may be an acceptable option.
+
+### Evince
+
+Strictly speaking, of course, Evince is the default viewer on Linux and its behavior is mostly described above. However, there is one feature that's been added that's unique to Evince. If the `bring_evince_forward` setting in the `viewer_settings` block is set to `true` and `keep_focus` remains set to `true`, Evince will first be brought to the foreground and then focus will be returned ST. 
 
 ### Okular
 
@@ -908,6 +1052,10 @@ The local cache also has a lifespan, after which it will be invalidated. The lif
 
 ## Troubleshooting
 
+### System Check
+
+To aid in troubleshooting a range of issues, we have added a feature that wil check your current system setup to give you an idea of what your current configuration looks like to LaTeXTools. In particular, it tests for key environment variables, the availability of key executables, the selected builder and the selected viewer. This command can be run by invoking **LaTeXTools: Check system** from the **Command Palette**. If it is run with a LaTeX document as the visible window, the information provided will reflect the settings for the current project.
+
 ### Path issues
 
 Many LaTeXTools problems are path-related. The `LaTeXTools.sublime-settings` file attempts to set up default path locations for MiKTeX, TeXLive and MacTeX, but these are not guaranteed to cover all possibilities. Please let me know if you have any difficulties.
@@ -928,7 +1076,7 @@ and again take note of what you see in the output panel (right above the line wh
 
 On Linux, do note that your login shell may be different from the shell that launched Sublime Text. This can mean that LaTeXTools does not inherit your `$PATH` correctly, particularly if you modify your `$PATH` in `.bash_profile` or `.bashrc` or other, shell-specific files (X Windows is run via `/bin/sh` rather than `/bin/bash`). If you have a similar problem, follow the same procedure as above, although you should launch the `sublime_text` executable from a shell.
 
-### Non-ASCII characters and spaces in path and file names ###
+### Non-ASCII characters and spaces in path and file names
 
 Another *significant* source of issues are **Unicode characters in path and file names**. On TeXLive-based platforms, LaTeXTools tries to handle these by telling `latexmk` to `cd` to each source file's directory before running `pdflatex`. This seems to help some. However, things seem to vary by platform and locale, so I cannot make any guarantees that your Unicode path names will work. Keep in mind that TeX itself has issues with Unicode characters in file names (as a quick Google search will confirm).
 
@@ -950,3 +1098,9 @@ The second exception has to do with file and path names. In order to accommodate
 
 Finally, I have done my best to accommodate non-ASCII characters in logs. I cannot promise that everything works, but I'd like to know if you see issues with this.
  
+### Equation preview shows "ERROR: Failed to run 'pdflatex' to create pdf to preview."
+
+This indicates that there is a problem running pdflatex to create the equation preview document. Normally this caused by not having the necessary packages installed. You can check that the required packages are installed by using the **LaTeXTools: Check System** command or click on the **(Check System)** Button and use your package manager to install any missing packages.
+
+If the system check does not report preview related problem, you can click on **(Show Report)** to see more details like the build errors and the tex document, which was used to build the preview.
+An common cause would be due to using commands and symbols in your equation that are not defined in the default template. You can extend the packages loaded by changing the `preview_math_template_packages` setting or by modifying the `preview_math_template_preamble` setting to add new commands, etc.
